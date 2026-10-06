@@ -219,6 +219,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
     <section class="panel">
         <form class="form-stack order-form" method="post">
+            <?php echo csrf_field(); ?>
             <div class="form-grid">
                 <label>
                     Müşteri

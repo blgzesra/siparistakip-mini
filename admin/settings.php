@@ -97,6 +97,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
         </div>
 
         <form class="form-stack" method="post">
+            <?php echo csrf_field(); ?>
             <div class="form-grid">
                 <label>
                     Panel Adı

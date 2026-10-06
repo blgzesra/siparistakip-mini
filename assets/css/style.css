@@ -90,15 +90,28 @@ textarea {
     color: var(--muted);
 }
 
-.topbar-user a {
+.topbar-user a,
+.topbar-user .logout-button {
     color: var(--primary);
     font-weight: 700;
     padding: 7px 10px;
     border-radius: 8px;
 }
 
-.topbar-user a:hover {
+.topbar-user a:hover,
+.topbar-user .logout-button:hover {
     background: var(--primary-soft);
+}
+
+.logout-form {
+    margin: 0;
+}
+
+.topbar-user .logout-button {
+    border: 0;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
 }
 
 .sidebar {

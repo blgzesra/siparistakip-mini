@@ -114,6 +114,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
                                         <a class="btn btn-secondary btn-small" href="<?php echo url('admin/order_form.php?id=' . (int) $order['id']); ?>">Düzenle</a>
                                         <a class="btn btn-whatsapp btn-small" href="<?php echo e(whatsapp_order_url($order)); ?>" target="_blank" rel="noopener">WhatsApp</a>
                                         <form method="post" onsubmit="return confirm('Bu siparişi silmek istediğinize emin misiniz?');">
+                                            <?php echo csrf_field(); ?>
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="id" value="<?php echo (int) $order['id']; ?>">
                                             <button class="btn btn-danger btn-small" type="submit">Sil</button>

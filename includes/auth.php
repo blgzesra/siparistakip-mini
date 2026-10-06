@@ -51,6 +51,7 @@ function login_user(string $email, string $password): bool
     }
 
     session_regenerate_id(true);
+    unset($_SESSION['csrf_token']);
 
     $_SESSION['auth_user'] = [
         'id' => (int) $user['id'],
@@ -92,3 +93,59 @@ function require_login(): void
         redirect('admin/login.php');
     }
 }
+
+function csrf_token(): string
+{
+    if (empty($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+
+    return $_SESSION['csrf_token'];
+}
+
+function csrf_field(): string
+{
+    return '<input type="hidden" name="csrf_token" value="' . e(csrf_token()) . '">';
+}
+
+function csrf_is_valid($token): bool
+{
+    return is_string($token)
+        && $token !== ''
+        && !empty($_SESSION['csrf_token'])
+        && is_string($_SESSION['csrf_token'])
+        && hash_equals($_SESSION['csrf_token'], $token);
+}
+
+// Every POST to a page that includes this file must carry the session's token.
+function require_valid_csrf(): void
+{
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST' || csrf_is_valid($_POST['csrf_token'] ?? null)) {
+        return;
+    }
+
+    http_response_code(400);
+    ?>
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Geçersiz istek - <?php echo e(APP_NAME); ?></title>
+    <link rel="stylesheet" href="<?php echo asset('assets/css/style.css'); ?>">
+</head>
+<body class="login-page">
+    <main class="login-shell">
+        <section class="login-card">
+            <div class="alert alert-error">Form güvenlik doğrulaması başarısız oldu. Sayfanın süresi dolmuş olabilir.</div>
+            <p>Lütfen sayfayı yeniden açıp işlemi tekrar deneyin.</p>
+            <a class="btn btn-primary" href="<?php echo url('admin/index.php'); ?>">Panele dön</a>
+        </section>
+    </main>
+</body>
+</html>
+<?php
+    exit;
+}
+
+require_valid_csrf();

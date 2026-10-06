@@ -19,6 +19,9 @@ $user = current_user();
             </div>
             <div class="topbar-user">
                 <span><?php echo e($user['name'] ?? 'Yönetici'); ?></span>
-                <a href="<?php echo url('admin/logout.php'); ?>">Çıkış</a>
+                <form method="post" action="<?php echo url('admin/logout.php'); ?>" class="logout-form">
+                    <?php echo csrf_field(); ?>
+                    <button type="submit" class="logout-button">Çıkış</button>
+                </form>
             </div>
         </header>

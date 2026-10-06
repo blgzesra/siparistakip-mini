@@ -49,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form method="post" class="form-stack" autocomplete="off">
+                <?php echo csrf_field(); ?>
                 <label>
                     <span>E-posta</span>
                     <input

@@ -147,6 +147,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
         </div>
 
         <form class="form-stack" method="post">
+            <?php echo csrf_field(); ?>
             <input type="hidden" name="action" value="save">
 
             <div class="form-grid">
@@ -214,6 +215,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
                                     <div class="action-row">
                                         <a class="btn btn-secondary btn-small" href="<?php echo url('admin/products.php?id=' . (int) $product['id']); ?>">Düzenle</a>
                                         <form method="post" onsubmit="return confirm('Bu ürünü silmek istediğinize emin misiniz?');">
+                                            <?php echo csrf_field(); ?>
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="id" value="<?php echo (int) $product['id']; ?>">
                                             <button class="btn btn-danger btn-small" type="submit">Sil</button>
