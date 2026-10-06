@@ -13,6 +13,10 @@ A small PHP + MySQL admin panel for keeping track of customers, products and ord
 - **Admin dashboard**: today's order count and revenue, the counts of new and delivered orders, and the five latest orders.
 - **Demo database**: `database.sql` creates the tables, a demo admin and sample customers, products and orders.
 
+## Screenshots
+
+No screenshots yet. They will be added under `docs/screenshots/`.
+
 ## Security
 
 - All database access goes through PDO prepared statements, with emulated prepares turned off.
@@ -53,6 +57,7 @@ admin/        Panel pages (login, dashboard, orders, customers, products, settin
 includes/     Config, PDO connection, session/auth/CSRF, shared layout and helpers
 assets/       CSS and a small JavaScript file
 database.sql  Schema plus demo data
+docs/         Screenshots (docs/screenshots/)
 ```
 
 ## Known limitations
