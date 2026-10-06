@@ -101,6 +101,15 @@ CREATE TABLE IF NOT EXISTS `order_items` (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Hatalı giriş denemeleri (IP başına sayaç ve kilit; zamanlar Unix saniyesi)
+CREATE TABLE IF NOT EXISTS `login_attempts` (
+    `ip_address` VARCHAR(45) NOT NULL,
+    `failed_count` INT UNSIGNED NOT NULL DEFAULT 0,
+    `last_failed_at` INT UNSIGNED NOT NULL DEFAULT 0,
+    `locked_until` INT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (`ip_address`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Varsayılan admin girişi: admin@demo.com / admin123
 INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `role`, `is_active`)
 VALUES

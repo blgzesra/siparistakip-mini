@@ -4,8 +4,19 @@ declare(strict_types=1);
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/functions.php';
 
+// A signed-in admin who does nothing for this long is signed out.
+const SESSION_IDLE_TIMEOUT = 1800;
+// After this many wrong passwords from one IP, logins from it are refused for LOGIN_LOCK_SECONDS.
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_LOCK_SECONDS = 900;
+
 if (session_status() === PHP_SESSION_NONE) {
     $isSecure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+
+    // Keep session files at least as long as the idle timeout.
+    if ((int) ini_get('session.gc_maxlifetime') < SESSION_IDLE_TIMEOUT) {
+        ini_set('session.gc_maxlifetime', (string) SESSION_IDLE_TIMEOUT);
+    }
 
     session_set_cookie_params([
         'lifetime' => 0,
@@ -59,6 +70,7 @@ function login_user(string $email, string $password): bool
         'email' => $user['email'],
         'role' => $user['role'],
     ];
+    $_SESSION['last_activity'] = time();
 
     $update = db()->prepare('UPDATE users SET last_login_at = NOW() WHERE id = :id');
     $update->execute(['id' => (int) $user['id']]);
@@ -92,6 +104,104 @@ function require_login(): void
     if (!is_logged_in()) {
         redirect('admin/login.php');
     }
+}
+
+function enforce_idle_timeout(): void
+{
+    if (!is_logged_in()) {
+        return;
+    }
+
+    $lastActivity = (int) ($_SESSION['last_activity'] ?? 0);
+
+    if ($lastActivity > 0 && time() - $lastActivity > SESSION_IDLE_TIMEOUT) {
+        logout_user();
+        redirect('admin/login.php?expired=1');
+    }
+
+    $_SESSION['last_activity'] = time();
+}
+
+function client_ip(): string
+{
+    return substr((string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), 0, 45);
+}
+
+function ensure_login_attempts_table(): void
+{
+    db()->exec(
+        'CREATE TABLE IF NOT EXISTS login_attempts (
+            ip_address VARCHAR(45) NOT NULL,
+            failed_count INT UNSIGNED NOT NULL DEFAULT 0,
+            last_failed_at INT UNSIGNED NOT NULL DEFAULT 0,
+            locked_until INT UNSIGNED NOT NULL DEFAULT 0,
+            PRIMARY KEY (ip_address)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+    );
+}
+
+// Seconds until this IP may try to log in again; 0 when it is not locked.
+function login_lock_remaining(string $ip): int
+{
+    $stmt = db()->prepare('SELECT locked_until FROM login_attempts WHERE ip_address = :ip LIMIT 1');
+    $stmt->execute(['ip' => $ip]);
+    $lockedUntil = (int) $stmt->fetchColumn();
+
+    return max(0, $lockedUntil - time());
+}
+
+// Counts a wrong password; returns the lock length in seconds when this one locks the IP, else 0.
+function record_failed_login(string $ip): int
+{
+    $now = time();
+
+    $stmt = db()->prepare('SELECT failed_count, last_failed_at FROM login_attempts WHERE ip_address = :ip LIMIT 1');
+    $stmt->execute(['ip' => $ip]);
+    $row = $stmt->fetch();
+
+    $failedCount = 1;
+
+    if ($row && $now - (int) $row['last_failed_at'] < LOGIN_LOCK_SECONDS) {
+        $failedCount = (int) $row['failed_count'] + 1;
+    }
+
+    $lockedUntil = 0;
+
+    if ($failedCount >= LOGIN_MAX_ATTEMPTS) {
+        $lockedUntil = $now + LOGIN_LOCK_SECONDS;
+        $failedCount = 0;
+    }
+
+    $upsert = db()->prepare(
+        'INSERT INTO login_attempts (ip_address, failed_count, last_failed_at, locked_until)
+         VALUES (:ip, :failed_count, :last_failed_at, :locked_until)
+         ON DUPLICATE KEY UPDATE
+            failed_count = VALUES(failed_count),
+            last_failed_at = VALUES(last_failed_at),
+            locked_until = VALUES(locked_until)'
+    );
+    $upsert->execute([
+        'ip' => $ip,
+        'failed_count' => $failedCount,
+        'last_failed_at' => $now,
+        'locked_until' => $lockedUntil,
+    ]);
+
+    return $lockedUntil > 0 ? LOGIN_LOCK_SECONDS : 0;
+}
+
+function clear_failed_logins(string $ip): void
+{
+    $stmt = db()->prepare('DELETE FROM login_attempts WHERE ip_address = :ip');
+    $stmt->execute(['ip' => $ip]);
+}
+
+function login_lock_message(int $seconds): string
+{
+    return sprintf(
+        'Çok fazla hatalı giriş denemesi. Lütfen %d dakika sonra tekrar deneyin.',
+        (int) ceil($seconds / 60)
+    );
 }
 
 function csrf_token(): string
@@ -148,4 +258,5 @@ function require_valid_csrf(): void
     exit;
 }
 
+enforce_idle_timeout();
 require_valid_csrf();

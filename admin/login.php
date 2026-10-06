@@ -9,17 +9,27 @@ if (is_logged_in()) {
 
 $error = '';
 $email = '';
+$notice = isset($_GET['expired']) ? 'Uzun süre işlem yapılmadığı için oturumunuz kapatıldı. Lütfen tekrar giriş yapın.' : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
+    $email = trim((string) ($_POST['email'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
+    $notice = '';
 
-    if ($email === '' || $password === '') {
+    ensure_login_attempts_table();
+    $ip = client_ip();
+    $lockRemaining = login_lock_remaining($ip);
+
+    if ($lockRemaining > 0) {
+        $error = login_lock_message($lockRemaining);
+    } elseif ($email === '' || $password === '') {
         $error = 'E-posta ve şifre zorunludur.';
     } elseif (login_user($email, $password)) {
+        clear_failed_logins($ip);
         redirect('admin/index.php');
     } else {
-        $error = 'E-posta veya şifre hatalı.';
+        $lockSeconds = record_failed_login($ip);
+        $error = $lockSeconds > 0 ? login_lock_message($lockSeconds) : 'E-posta veya şifre hatalı.';
     }
 }
 ?>
@@ -43,6 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <p class="login-intro">Siparişleri, müşterileri ve ürünleri tek ekrandan güvenle yönetin.</p>
+
+            <?php if ($notice !== ''): ?>
+                <div class="alert alert-success"><?php echo e($notice); ?></div>
+            <?php endif; ?>
 
             <?php if ($error !== ''): ?>
                 <div class="alert alert-error"><?php echo e($error); ?></div>
