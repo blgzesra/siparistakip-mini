@@ -1,0 +1,11 @@
+# Local configuration (database credentials) — copy includes/config.example.php
+includes/config.php
+
+# Logs and uploaded files
+*.log
+uploads/
+
+# Editor and OS files
+.vscode/
+Thumbs.db
+.DS_Store

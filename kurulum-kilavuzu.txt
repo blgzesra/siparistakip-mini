@@ -1,0 +1,76 @@
+SiparişTakip Mini Kurulum Kılavuzu
+==================================
+
+Gereksinimler
+-------------
+
+- PHP 7.4 veya üzeri
+- MySQL 5.7 veya üzeri / MariaDB
+- Apache destekli WAMP, cPanel veya benzeri paylaşımlı hosting
+
+WAMP Kurulumu
+-------------
+
+1. WAMP'i kurun ve Apache ile MySQL servislerini çalıştırın.
+2. siparistakip-mini klasörünü şu dizine koyun:
+   c:\wamp64\www\siparistakip-mini
+3. Tarayıcıda phpMyAdmin'i açın:
+   http://localhost/phpmyadmin
+4. WAMP varsayılan bilgileriyle giriş yapın:
+   Kullanıcı adı: root
+   Şifre: boş bırakın
+5. phpMyAdmin ana sayfasında Import / İçe Aktar bölümünü açın.
+6. database.sql dosyasını seçin. Bu dosya siparistakip_mini veritabanını kendisi oluşturur.
+7. Karakter seti sorulursa utf-8 seçin ve import işlemini başlatın.
+8. includes/config.example.php dosyasını aynı klasöre includes/config.php adıyla kopyalayın.
+   (config.php git'e eklenmez; şifreleriniz yalnızca bu dosyada durur.)
+   WAMP için config.example.php içindeki varsayılan bilgiler genellikle yeterlidir:
+   DB_HOST: localhost
+   DB_NAME: siparistakip_mini
+   DB_USER: root
+   DB_PASS: boş
+9. Paneli açın:
+   http://localhost/siparistakip-mini/admin/login.php
+
+cPanel / Paylaşımlı Hosting Kurulumu
+------------------------------------
+
+1. Hosting panelinizde yeni bir MySQL veritabanı oluşturun.
+2. Bu veritabanı için bir MySQL kullanıcısı oluşturun ve kullanıcıya tüm yetkileri verin.
+3. cPanel > phpMyAdmin bölümünden oluşturduğunuz veritabanını seçin.
+4. Import / İçe Aktar bölümünden database.sql dosyasını içe aktarın.
+5. siparistakip-mini klasörünü public_html altına veya kullanmak istediğiniz alt klasöre yükleyin.
+6. includes/config.example.php dosyasını includes/config.php adıyla kopyalayın ve
+   config.php içindeki veritabanı bilgilerini hosting bilgilerinizle güncelleyin:
+   DB_HOST: Hosting sağlayıcınızın verdiği sunucu, çoğu zaman localhost
+   DB_NAME: Oluşturduğunuz veritabanı adı
+   DB_USER: Oluşturduğunuz veritabanı kullanıcısı
+   DB_PASS: Veritabanı kullanıcısının şifresi
+7. APP_URL değerini kurulum yolunuza göre kontrol edin. Örnek:
+   /siparistakip-mini
+
+database.sql İçe Aktarma
+------------------------
+
+database.sql şunları yapar:
+- siparistakip_mini veritabanını yoksa oluşturur.
+- Gerekli tabloları utf8mb4_unicode_ci ile oluşturur.
+- Varsayılan admin hesabını ekler.
+- Demo müşteriler, ürünler ve siparişler ekler.
+
+Varsayılan Admin
+----------------
+
+E-posta: admin@demo.com
+Şifre: admin123
+
+Yayına almadan önce admin şifresini değiştirmeniz önerilir.
+
+Sık Görülen Hatalar
+-------------------
+
+1045 Access denied:
+Veritabanı kullanıcı adı veya şifre hatalıdır. includes/config.php içindeki DB_USER ve DB_PASS değerlerini kontrol edin. cPanel kullanıyorsanız kullanıcıya veritabanı yetkisi verildiğinden emin olun.
+
+1049 Unknown database:
+DB_NAME içinde yazan veritabanı bulunamıyor demektir. database.sql dosyasını import ettiğinizden ve includes/config.php içindeki DB_NAME değerinin gerçek veritabanı adıyla aynı olduğundan emin olun.
